@@ -5,7 +5,7 @@ import {
   type OrderDetails,
   type CartItemType,
 } from "@/types/order";
-import { calculateItemPrice } from "./CreateOrderForm";
+import { calculateItemPrice } from "@/utils/order";
 
 const { Title } = Typography;
 

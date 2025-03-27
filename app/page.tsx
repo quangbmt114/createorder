@@ -23,7 +23,7 @@ export default function OrderPage() {
   }
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 overflow-x-hidden">
+    <div className="w-full p-5 mx-auto px-4 sm:px-6 overflow-x-hidden">
       <CreateOrderForm />
     </div>
   );

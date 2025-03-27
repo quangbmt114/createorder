@@ -58,3 +58,8 @@ export const PROMOTIONS: PromotionType[] = [
     description: "No discount",
   },
 ];
+
+export const MESSAGE_NOTIFICATION = {
+  OrderSuccess: "Order created successfully",
+  OrderError: "Something went wrong",
+};
