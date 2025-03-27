@@ -19,7 +19,12 @@ import {
   type OrderFormData,
   type OrderDetails,
 } from "@/types/order";
-import { COLORS, PRODUCTS, PROMOTIONS } from "@/constants/order";
+import {
+  COLORS,
+  MESSAGE_NOTIFICATION,
+  PRODUCTS,
+  PROMOTIONS,
+} from "@/constants/order";
 import { calculateItemPrice } from "@/utils/order";
 
 const { Title } = Typography;
@@ -106,6 +111,7 @@ export default function CreateOrderForm() {
   const removeFromCart = useCallback(
     (productId: number): void => {
       const product = cart.find((item) => item.id === productId);
+
       if (product) {
         setCart(cart.filter((item) => item.id !== productId));
         messageApi.warning(`Removed ${product.name} from cart`);
@@ -122,6 +128,7 @@ export default function CreateOrderForm() {
             item.id === productId ? { ...item, quantity } : item
           )
         );
+
         const product = cart.find((item) => item.id === productId);
         if (product) {
           messageApi.info(`Updated ${product.name} quantity to ${quantity}`);
@@ -139,6 +146,7 @@ export default function CreateOrderForm() {
             item.id === productId ? { ...item, price } : item
           )
         );
+
         const product = cart.find((item) => item.id === productId);
         if (product) {
           messageApi.info(`Updated ${product.name} price to $${price}`);
@@ -151,12 +159,14 @@ export default function CreateOrderForm() {
   const updatePromotion = useCallback(
     (productId: number, promotionId: number): void => {
       const promotion = PROMOTIONS.find((p) => p.id === promotionId);
+
       if (promotion) {
         setCart(
           cart.map((item) =>
             item.id === productId ? { ...item, promotion } : item
           )
         );
+
         const product = cart.find((item) => item.id === productId);
         if (product) {
           messageApi.info(
@@ -168,7 +178,6 @@ export default function CreateOrderForm() {
     [cart, messageApi]
   );
 
-  // Memoize total calculations
   const totalAmount = useMemo(() => {
     return cart.reduce((total, item) => total + calculateItemPrice(item), 0);
   }, [cart, calculateItemPrice]);
@@ -185,7 +194,6 @@ export default function CreateOrderForm() {
     );
   }, [paymentMethod, cashAmount, totalAmount]);
 
-  // Memoize form submission
   const onSubmit = useCallback(
     (data: OrderFormData): void => {
       if (
@@ -210,7 +218,6 @@ export default function CreateOrderForm() {
     [cart, totalAmount, changeAmount, paymentMethod, cashAmount, messageApi]
   );
 
-  // Memoize modal handlers
   const handleModalClose = useCallback((): void => {
     setIsModalVisible(false);
     setOrderDetails(null);
@@ -220,7 +227,7 @@ export default function CreateOrderForm() {
     setIsModalVisible(false);
     reset();
     setCart([]);
-    messageApi.success("Order completed successfully!");
+    messageApi.success(MESSAGE_NOTIFICATION.OrderSuccess);
   }, [reset, messageApi]);
 
   return (
@@ -235,7 +242,7 @@ export default function CreateOrderForm() {
         className="w-full overflow-x-hidden"
       >
         <div className="flex flex-col md:flex-row gap-5">
-          <div className="w-full md:w-3/5">
+          <div className="w-full md:w-4/6">
             <CustomerForm control={control} errors={errors} />
             <ProductsSection
               cart={cart}
@@ -248,13 +255,14 @@ export default function CreateOrderForm() {
             />
           </div>
 
-          <div className="w-full md:w-2/5">
+          <div className="w-full md:w-2/6">
             <PaymentSection
               control={control}
               errors={errors}
               paymentMethod={paymentMethod}
               totalAmount={totalAmount}
             />
+
             <OrderSummary
               cart={cart}
               totalAmount={totalAmount}

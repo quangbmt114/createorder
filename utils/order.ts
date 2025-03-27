@@ -1,17 +1,13 @@
 import { CartItemType, PromotionTypeEnum } from "@/types/order";
 
 export const calculateItemPrice = (item: CartItemType): number => {
-  if (!item.promotion || item.promotion.code === "NONE") {
-    return item.price * item.quantity;
-  }
+  const { promotion, price, quantity } = item;
 
-  if (item.promotion.type === PromotionTypeEnum.PERCENTAGE) {
-    return item.price * item.quantity * (1 - item.promotion.value / 100);
-  }
+  if (promotion.type === PromotionTypeEnum.PERCENTAGE)
+    return price * quantity * (1 - promotion.value / 100);
 
-  if (item.promotion.type === PromotionTypeEnum.FIXED) {
-    return Math.max(0, item.price * item.quantity - item.promotion.value);
-  }
+  if (promotion.type === PromotionTypeEnum.FIXED)
+    return Math.max(0, price * quantity - promotion.value);
 
-  return item.price * item.quantity;
+  return price * quantity;
 };

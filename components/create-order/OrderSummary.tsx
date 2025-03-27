@@ -93,7 +93,11 @@ export function OrderSummary({
           </div>
         )}
 
-        <Tooltip title={tooltipMessage} open={isCheckoutDisabled}>
+        <Tooltip
+          title={tooltipMessage}
+          open={isCheckoutDisabled}
+          placement="bottom"
+        >
           <Button
             type="primary"
             size="large"

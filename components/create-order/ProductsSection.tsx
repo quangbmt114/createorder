@@ -46,7 +46,6 @@ export function ProductsSection({
     updatePromotion(productId, value);
   };
 
-  // Cart columns for the table
   const cartColumns = [
     {
       title: "Product",
