@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
@@ -20,6 +20,7 @@ import {
   type OrderDetails,
 } from "@/types/order";
 import { COLORS, PRODUCTS, PROMOTIONS } from "@/constants/order";
+import { calculateItemPrice } from "@/utils/order";
 
 const { Title } = Typography;
 
@@ -45,6 +46,11 @@ const schema = yup.object().shape({
 });
 
 export default function CreateOrderForm() {
+  const [cart, setCart] = useState<CartItemType[]>([]);
+  const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
+  const [orderDetails, setOrderDetails] = useState<OrderDetails | null>(null);
+  const [messageApi, contextHolder] = message.useMessage();
+
   const {
     control,
     handleSubmit,
@@ -65,32 +71,12 @@ export default function CreateOrderForm() {
   const paymentMethod = watch("paymentMethod");
   const cashAmount = watch("cashAmount") || 0;
 
-  const [cart, setCart] = useState<CartItemType[]>([]);
-  const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
-  const [orderDetails, setOrderDetails] = useState<OrderDetails | null>(null);
-  const [messageApi, contextHolder] = message.useMessage();
+  const addToCart = useCallback(
+    (productId: number): void => {
+      const product = PRODUCTS.find((p) => p.id === productId);
+      if (!product) return;
 
-  const totalAmount = useMemo(() => {
-    return cart.reduce((total, item) => total + calculateItemPrice(item), 0);
-  }, [cart]);
-
-  const changeAmount = useMemo(() => {
-    return paymentMethod === PaymentMethodEnum.CASH
-      ? cashAmount - totalAmount
-      : 0;
-  }, [paymentMethod, cashAmount, totalAmount]);
-
-  const isCashSufficient = useMemo(() => {
-    return (
-      paymentMethod !== PaymentMethodEnum.CASH || cashAmount >= totalAmount
-    );
-  }, [paymentMethod, cashAmount, totalAmount]);
-
-  const addToCart = (productId: number): void => {
-    const product = PRODUCTS.find((p) => p.id === productId);
-    if (product) {
       const existingItem = cart.find((item) => item.id === productId);
-
       if (existingItem) {
         setCart(
           cart.map((item) =>
@@ -113,75 +99,129 @@ export default function CreateOrderForm() {
         ]);
         messageApi.success(`Added ${product.name} to cart`);
       }
-    }
-  };
+    },
+    [cart, messageApi]
+  );
 
-  const removeFromCart = (productId: number): void => {
-    const product = cart.find((item) => item.id === productId);
-    if (product) {
-      setCart(cart.filter((item) => item.id !== productId));
-      messageApi.warning(`Removed ${product.name} from cart`);
-    }
-  };
-
-  const updateQuantity = (productId: number, quantity: number): void => {
-    if (quantity > 0) {
-      setCart(
-        cart.map((item) =>
-          item.id === productId ? { ...item, quantity } : item
-        )
-      );
+  const removeFromCart = useCallback(
+    (productId: number): void => {
       const product = cart.find((item) => item.id === productId);
       if (product) {
-        messageApi.info(`Updated ${product.name} quantity to ${quantity}`);
+        setCart(cart.filter((item) => item.id !== productId));
+        messageApi.warning(`Removed ${product.name} from cart`);
       }
-    }
-  };
+    },
+    [cart, messageApi]
+  );
 
-  const updatePrice = (productId: number, price: number): void => {
-    if (price > 0) {
-      setCart(
-        cart.map((item) => (item.id === productId ? { ...item, price } : item))
-      );
-      const product = cart.find((item) => item.id === productId);
-      if (product) {
-        messageApi.info(`Updated ${product.name} price to $${price}`);
+  const updateQuantity = useCallback(
+    (productId: number, quantity: number): void => {
+      if (quantity > 0) {
+        setCart(
+          cart.map((item) =>
+            item.id === productId ? { ...item, quantity } : item
+          )
+        );
+        const product = cart.find((item) => item.id === productId);
+        if (product) {
+          messageApi.info(`Updated ${product.name} quantity to ${quantity}`);
+        }
       }
-    }
-  };
+    },
+    [cart, messageApi]
+  );
 
-  const updatePromotion = (productId: number, promotionId: number): void => {
-    const promotion = PROMOTIONS.find((p) => p.id === promotionId);
-    if (promotion) {
-      setCart(
-        cart.map((item) =>
-          item.id === productId ? { ...item, promotion } : item
-        )
-      );
-      const product = cart.find((item) => item.id === productId);
-      if (product) {
-        messageApi.info(`Applied ${promotion.description} to ${product.name}`);
+  const updatePrice = useCallback(
+    (productId: number, price: number): void => {
+      if (price > 0) {
+        setCart(
+          cart.map((item) =>
+            item.id === productId ? { ...item, price } : item
+          )
+        );
+        const product = cart.find((item) => item.id === productId);
+        if (product) {
+          messageApi.info(`Updated ${product.name} price to $${price}`);
+        }
       }
-    }
-  };
+    },
+    [cart, messageApi]
+  );
 
-  const onSubmit = (data: OrderFormData): void => {
-    if (paymentMethod === PaymentMethodEnum.CASH && cashAmount < totalAmount) {
-      messageApi.error("Cash amount is insufficient for payment");
-      return;
-    }
+  const updatePromotion = useCallback(
+    (productId: number, promotionId: number): void => {
+      const promotion = PROMOTIONS.find((p) => p.id === promotionId);
+      if (promotion) {
+        setCart(
+          cart.map((item) =>
+            item.id === productId ? { ...item, promotion } : item
+          )
+        );
+        const product = cart.find((item) => item.id === productId);
+        if (product) {
+          messageApi.info(
+            `Applied ${promotion.description} to ${product.name}`
+          );
+        }
+      }
+    },
+    [cart, messageApi]
+  );
 
-    const orderData: OrderDetails = {
-      ...data,
-      cart,
-      totalAmount,
-      changeAmount:
-        data.paymentMethod === PaymentMethodEnum.CASH ? changeAmount : 0,
-    };
+  // Memoize total calculations
+  const totalAmount = useMemo(() => {
+    return cart.reduce((total, item) => total + calculateItemPrice(item), 0);
+  }, [cart, calculateItemPrice]);
 
-    setOrderDetails(orderData);
-    setIsModalVisible(true);
-  };
+  const changeAmount = useMemo(() => {
+    return paymentMethod === PaymentMethodEnum.CASH
+      ? cashAmount - totalAmount
+      : 0;
+  }, [paymentMethod, cashAmount, totalAmount]);
+
+  const isCashSufficient = useMemo(() => {
+    return (
+      paymentMethod !== PaymentMethodEnum.CASH || cashAmount >= totalAmount
+    );
+  }, [paymentMethod, cashAmount, totalAmount]);
+
+  // Memoize form submission
+  const onSubmit = useCallback(
+    (data: OrderFormData): void => {
+      if (
+        paymentMethod === PaymentMethodEnum.CASH &&
+        cashAmount < totalAmount
+      ) {
+        messageApi.error("Cash amount is insufficient for payment");
+        return;
+      }
+
+      const orderData: OrderDetails = {
+        ...data,
+        cart,
+        totalAmount,
+        changeAmount:
+          data.paymentMethod === PaymentMethodEnum.CASH ? changeAmount : 0,
+      };
+
+      setOrderDetails(orderData);
+      setIsModalVisible(true);
+    },
+    [cart, totalAmount, changeAmount, paymentMethod, cashAmount, messageApi]
+  );
+
+  // Memoize modal handlers
+  const handleModalClose = useCallback((): void => {
+    setIsModalVisible(false);
+    setOrderDetails(null);
+  }, []);
+
+  const handleModalComplete = useCallback((): void => {
+    setIsModalVisible(false);
+    reset();
+    setCart([]);
+    messageApi.success("Order completed successfully!");
+  }, [reset, messageApi]);
 
   return (
     <>
@@ -213,6 +253,7 @@ export default function CreateOrderForm() {
               control={control}
               errors={errors}
               paymentMethod={paymentMethod}
+              totalAmount={totalAmount}
             />
             <OrderSummary
               cart={cart}
@@ -221,6 +262,7 @@ export default function CreateOrderForm() {
               cashAmount={cashAmount}
               changeAmount={changeAmount}
               isCashSufficient={isCashSufficient}
+              calculateItemPrice={calculateItemPrice}
             />
           </div>
         </div>
@@ -229,30 +271,9 @@ export default function CreateOrderForm() {
       <ConfirmOrderModal
         isVisible={isModalVisible}
         orderDetails={orderDetails}
-        onClose={() => setIsModalVisible(false)}
-        onComplete={() => {
-          setIsModalVisible(false);
-          reset();
-          setCart([]);
-          messageApi.success("Order completed successfully!");
-        }}
+        onClose={handleModalClose}
+        onComplete={handleModalComplete}
       />
     </>
   );
 }
-
-export const calculateItemPrice = (item: CartItemType): number => {
-  if (!item.promotion || item.promotion.code === "NONE") {
-    return item.price * item.quantity;
-  }
-
-  if (item.promotion.type === PromotionTypeEnum.PERCENTAGE) {
-    return item.price * item.quantity * (1 - item.promotion.value / 100);
-  }
-
-  if (item.promotion.type === PromotionTypeEnum.FIXED) {
-    return Math.max(0, item.price * item.quantity - item.promotion.value);
-  }
-
-  return item.price * item.quantity;
-};

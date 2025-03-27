@@ -3,17 +3,20 @@ import { Form, Radio, InputNumber, Card, Space } from "antd";
 import { FaDollarSign, FaCreditCard } from "react-icons/fa";
 import { PaymentMethodEnum } from "@/types/order";
 import type { Control, FieldErrors } from "react-hook-form";
+import type { OrderFormData } from "@/types/order";
 
 interface PaymentSectionProps {
-  control: Control<any>;
-  errors: FieldErrors;
+  control: Control<OrderFormData>;
+  errors: FieldErrors<OrderFormData>;
   paymentMethod: PaymentMethodEnum;
+  totalAmount: number;
 }
 
 export function PaymentSection({
   control,
   errors,
   paymentMethod,
+  totalAmount,
 }: PaymentSectionProps) {
   return (
     <Card title="Payment Information" style={{ marginBottom: 20 }}>
@@ -61,7 +64,9 @@ export function PaymentSection({
                 formatter={(value) =>
                   `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
                 }
-                parser={(value) => value?.replace(/\$\s?|(,*)/g, "")}
+                parser={(value: string | undefined) =>
+                  value ? Number(value.replace(/\$\s?|(,*)/g, "")) : 0
+                }
               />
             </Form.Item>
           )}
