@@ -1,0 +1,77 @@
+.custom-primary-button:hover {
+  background-color: #4a58b0 !important;
+  border-color: #4a58b0 !important;
+}
+
+.custom-success-tag {
+  background-color: #36b37e !important;
+  border-color: #36b37e !important;
+  color: white !important;
+}
+
+.custom-radio .ant-radio-checked .ant-radio-inner {
+  border-color: #5c6ac4 !important;
+  background-color: #5c6ac4 !important;
+}
+
+.ant-select-focused .ant-select-selector {
+  border-color: #5c6ac4 !important;
+}
+
+.ant-input:focus,
+.ant-input-focused {
+  border-color: #5c6ac4 !important;
+}
+
+.ant-input-number:focus,
+.ant-input-number-focused {
+  border-color: #5c6ac4 !important;
+}
+
+/* Override Ant Design's default focus styles */
+.ant-input:hover,
+.ant-input-number:hover,
+.ant-select:hover .ant-select-selector {
+  border-color: #5c6ac4 !important;
+}
+
+/* Custom styles for form validation */
+.ant-form-item-has-error .ant-input,
+.ant-form-item-has-error .ant-input-number,
+.ant-form-item-has-error .ant-select-selector {
+  border-color: #ff5630 !important;
+}
+
+/* Add these responsive styles to the end of the file */
+@media (max-width: 640px) {
+  .ant-table {
+    font-size: 12px;
+  }
+
+  .ant-input-number {
+    min-width: 60px !important;
+  }
+
+  .ant-select {
+    min-width: 80px !important;
+  }
+
+  .ant-card-body {
+    padding: 16px 12px;
+  }
+
+  .ant-form-item {
+    margin-bottom: 16px;
+  }
+
+  .ant-form-item-label {
+    padding-bottom: 4px;
+  }
+}
+
+/* Fix for horizontal scrolling */
+body,
+html {
+  overflow-x: hidden;
+  max-width: 100%;
+}
